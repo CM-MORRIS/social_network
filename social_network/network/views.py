@@ -1,10 +1,14 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
+import json
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view
 
-from .models import User
+from .models import User, Posts, Follows, Likes
 
 
 def index(request):
@@ -61,3 +65,23 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/register.html")
+
+@login_required
+def create_post(request):
+
+    if request.method == "POST":
+
+        # load the data
+        data = json.loads(request.body)
+        post_text = data.get("text")
+
+        try:
+
+            # save new post to database
+            new_post = Posts(user_id=request.user, text=post_text)
+            new_post.save()
+            return HttpResponse(status=204)
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({"error": "Cannot create post."}, status=404)
