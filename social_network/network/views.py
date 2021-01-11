@@ -5,15 +5,9 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
-from django.core.serializers import serialize
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
-from django.core import serializers
 from django.forms.models import model_to_dict
 
-
-
-from .models import User, Posts, Follows, Likes
+from .models import User, Posts
 
 
 def index(request):

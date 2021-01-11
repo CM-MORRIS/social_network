@@ -9,6 +9,7 @@ class User(AbstractUser):
     # following_count = models.IntegerField()
     pass
 
+# to add extra fields to user do it with profile using onetoone for user
 # class Profile(models.Model):
 #     user = models.OneToOneField(User, on_delete=models.CASCADE)
 #     middle_name = models.CharField(max_length=30, blank=True)
@@ -30,9 +31,9 @@ class Posts(models.Model):
         }
 
 class Follows(models.Model):
-    user_id         = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_follows")
-    user_following  = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_followed_by")
-    isFollowing     = models.BooleanField(default=True)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_follows")
+    user_following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_followed_by")
+    isFollowing = models.BooleanField(default=True)
 
 class Likes(models.Model):
     user_id  = models.ForeignKey(User, on_delete=models.CASCADE, related_name="all_user_likes")

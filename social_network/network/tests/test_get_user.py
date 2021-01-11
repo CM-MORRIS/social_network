@@ -1,7 +1,6 @@
 import json
-import requests
 from django.test import Client, TestCase
-from network.models import User, Posts
+from network.models import User
 
 
 class Tests(TestCase):
@@ -26,7 +25,9 @@ class Tests(TestCase):
 
         # assert username returned from response is as expected
         self.assertEqual(username, self.user1.username)
-    
+
+        
+            
     # def test_get_all_posts_bad_request(self):
 
     #     # cannot make a POST request to this endpoint
