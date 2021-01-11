@@ -9,12 +9,13 @@ class Tests(TestCase):
 
         self.client = Client()
 
-        # test users to create the test posts
+        # test user to get
         self.user1 = User.objects.create_user(username='test-user1')
 
 
     def test_get_user(self):
 
+        # specify user to get data for 
         response = self.client.get("/get_user/" + str(self.user1.pk))
 
         # convert JSON response to python dict
@@ -23,14 +24,13 @@ class Tests(TestCase):
         # retrieve 'username' from dict
         username = response_dict['username']
 
-        # assert username returned from response is as expected
+        # assert username returned from response is same as our created test user
         self.assertEqual(username, self.user1.username)
 
+    def test_get_user_error(self):
+
+        # specify user to get data for 
+        response = self.client.post("/get_user/" + str(self.user1.pk))
+
+        self.assertEqual(response.status_code, 400)
         
-            
-    # def test_get_all_posts_bad_request(self):
-
-    #     # cannot make a POST request to this endpoint
-    #     response = self.client.post("/all_posts")
-
-    #     self.assertEqual(response.status_code, 400)
