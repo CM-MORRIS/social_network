@@ -1,11 +1,5 @@
-import unittest
-import json
 from django.test import Client, TestCase, RequestFactory
 from network.models import User, Posts
-import django.utils.timezone
-from rest_framework.test import APIRequestFactory, RequestsClient, APIClient
-from rest_framework.test import force_authenticate
-
 from network.views import create_post
 
 
@@ -18,22 +12,21 @@ class Tests(TestCase):
         # Session and authentication attributes must be supplied
         # by the test itself if required for the view to function properly.
         self.factory = RequestFactory()
+        self.client = Client()
 
         self.user = User.objects.create_user(
             username='test-user', email='test@mail.com', password='secret')
+
+        self.data = {'text': 'This is a post'}
 
     # test that when a POST is made to 'create_post' view
     # that a post is created by logged in user
 
     def test_create_post(self):
 
-        data = {
-            'text': 'This is a post'
-        }
-
-        # Create an instance of a GET request.
+        # Create an instance of a POST request.
         request = self.factory.post(
-            '/create_post', data, content_type='application/json')
+            '/create_post', self.data, content_type='application/json')
 
         # Recall that middleware are not supported. You can simulate a
         # logged-in user by setting request.user manually.
@@ -50,12 +43,30 @@ class Tests(TestCase):
 
         # test the newly created post matches test post data
         post = Posts.objects.get(user_id=self.user)
-        self.assertEqual(post.text, data.get("text"))
+        self.assertEqual(post.text, self.data.get("text"))
 
+    def test_create_post_bad_request(self):
 
-# 'context' is what is parsed to template when rendering html, i.e. the variable parsed through
-# self.assertEqual(response.context["passengers"].count(), 1)
+        # Create an instance of a GET request.
+        request = self.factory.get(
+            '/create_post', self.data, content_type='application/json')
 
-# RequestFactory returns a request, while Client returns a response.
+        # Recall that middleware are not supported. You can simulate a
+        # logged-in user by setting request.user manually.
+        request.user = self.user
 
-# self.assertRedirects(response, '/catalog/')
+        # Test create_post() as if it were deployed at /create_post
+        response = create_post(request)
+
+        # bad request
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_post_not_logged_in(self):
+
+        # no user logged in when making this request
+        response = self.client.post("/create_post",
+                                    self.data, content_type='application/json')
+
+        # '@login_required' in views redirects to the
+        # login page if the user is not logged in so returns 302
+        self.assertEqual(response.status_code, 302)
