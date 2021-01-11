@@ -18,6 +18,9 @@ class Tests(TestCase):
         # specify user to get data for 
         response = self.client.get("/get_user/" + str(self.user1.pk))
 
+        # check response 200 ok
+        self.assertEqual(response.status_code, 200)
+
         # convert JSON response to python dict
         response_dict = json.loads(response.content)
 
@@ -27,10 +30,10 @@ class Tests(TestCase):
         # assert username returned from response is same as our created test user
         self.assertEqual(username, self.user1.username)
 
+
     def test_get_user_error(self):
 
         # specify user to get data for 
         response = self.client.post("/get_user/" + str(self.user1.pk))
 
         self.assertEqual(response.status_code, 400)
-        
