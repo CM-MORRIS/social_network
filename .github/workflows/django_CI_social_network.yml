@@ -1,0 +1,43 @@
+# what this config will do:
+# checkout the code on an ubuntu vm, install requirements for app to run, and run user created tests.
+
+name: Django CI Social Network
+
+# run tests on push and pull requests
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    
+    # github has virtual machines, want to run the app on this type of vm - 'ubuntu-latest' latest version of Linux
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+
+    steps:
+        
+    # will checkout code in a git repo on vm which will allow programs to be run on the code
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    # first install django as this is needed, cd into dir where 'manage.py' is located,
+    # then run tests - tests are created by developer
+    - name: Install Dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip3 install -r requirements.txt
+        
+    - name: Run Tests
+      run: |
+        cd social_network
+        python3 manage.py test
+      
