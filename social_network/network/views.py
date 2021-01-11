@@ -69,62 +69,87 @@ def register(request):
 @login_required
 def create_post(request):
 
-    if request.method == "POST":
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required." }, status=400)
 
-        # load the data
-        data = json.loads(request.body)
-        post_text = data.get("text")
+    # POST request
 
-        try:
+    # load the data
+    data = json.loads(request.body)
+    post_text = data.get("text")
 
-            # save new post to database
-            new_post = Posts(user_id=request.user, text=post_text)
-            new_post.save()
-            return HttpResponse(status=204)
+    try:
 
-        except Exception as e:
-            print(e)
-            return JsonResponse({"error": "Cannot create post."}, status=404)
+        # save new post to database
+        new_post = Posts(user_id=request.user, text=post_text)
+        new_post.save()
+        return HttpResponse(status=204)
 
-    return JsonResponse({
-        "error": "POST request required."
-    }, status=400)
+    except Exception as e:
+        print(e)
+        return JsonResponse({"error": "Cannot create post."}, status=404)
 
 
 def get_all_posts(request):
 
-    if request.method == "GET":
+    if request.method != "GET":
+        return JsonResponse({ "error": "GET request required." }, status=400)
 
-        try:
-            all_posts = Posts.objects.all()
+    # GET request
 
-            # Return posts in reverse chronologial order
-            all_posts = all_posts.order_by("-date_time").all()
+    try:
+        all_posts = Posts.objects.all()
 
-            # .serialize() is a method in the models
-            return JsonResponse([post.serialize() for post in all_posts], safe=False)
+        # Return posts in reverse chronologial order
+        all_posts = all_posts.order_by("-date_time").all()
 
-        except Posts.DoesNotExist:
-            return JsonResponse({"error": "posts do not exist"}, status=404)
+        # .serialize() is a method in the models
+        return JsonResponse([post.serialize() for post in all_posts], safe=False, status=200)
 
-    return JsonResponse({ "error": "GET request required." }, status=400)
+    except Posts.DoesNotExist:
+        return JsonResponse({"error": "Posts do not exist"}, status=404)
+
+
+def get_user_posts(request, user_id):
+
+    if request.method != "GET":
+        return JsonResponse({ "error": "GET request required." }, status=400)
+
+    # GET request
+    try:
+        # check to see if user exists
+        user = User.objects.get(pk=user_id)
+
+        # get all posts for user
+        # user_posts = Posts.objects.filter(user_id=user.pk)
+        user_posts = user.user_posts
+
+        # Return posts in reverse chronologial order
+        user_posts = user_posts.order_by("-date_time").all()
+
+        # .serialize() is a method in the models
+        return JsonResponse([post.serialize() for post in user_posts], safe=False, status=200)
+
+    except Posts.DoesNotExist and User.DoesNotExist :
+        return JsonResponse({"error": "User has no posts"}, status=404)
+
 
 def get_user(request, user_id):
 
-    if request.method == "GET":
+    if request.method != "GET":
+        return JsonResponse({ "error": "GET request required." }, status=400)
 
-        try:
+    # GET request
+    try:
 
-            # get user model object
-            user_model_object = User.objects.get(pk=user_id)
+        # get user model object
+        user_model_object = User.objects.get(pk=user_id)
 
-            # convert object to a dict to parse to JsonResponse
-            user_dict = model_to_dict(user_model_object)
+        # convert object to a dict to parse to JsonResponse
+        user_dict = model_to_dict(user_model_object)
 
-            # user_dict is serialized to JSON within the JsonResponse and returned
-            return JsonResponse(user_dict)
+        # user_dict is serialized to JSON within the JsonResponse and returned
+        return JsonResponse(user_dict, status=200)
 
-        except User.DoesNotExist:
-            return JsonResponse({"error": "User does not exist"}, status=404)
-
-    return JsonResponse({ "error": "GET request required." }, status=400)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User does not exist"}, status=404)
