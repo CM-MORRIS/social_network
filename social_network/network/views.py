@@ -200,8 +200,8 @@ def follow(request, username):
 
         # if already exists, invert the boolean (i.e. follow and unfollow)
         if not created:
-            bool_value = obj.isFollowing
-            obj.isFollowing = not bool_value
+            bool_value = obj.is_following
+            obj.is_following = not bool_value
             obj.save()
             return JsonResponse({ "message": "Updated follow status" }, status=200)
         

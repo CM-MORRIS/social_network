@@ -45,13 +45,13 @@ class Follows(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_follows")
     user_following = models.ForeignKey(User, on_delete=models.CASCADE, 
                                              related_name="user_followed_by")
-    isFollowing = models.BooleanField(default=True)
+    is_following = models.BooleanField(default=True)
 
     def serialize(self):
         return {
             "user_id": self.user_id.username,
             "user_following": self.user_following.username,
-            "isFollowing": self.isFollowing
+            "is_following": self.is_following
         }
 
 
