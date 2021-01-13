@@ -16,7 +16,7 @@ class Tests(TestCase):
     def test_get_user(self):
 
         # specify user to get data for 
-        response = self.client.get("/get_user/" + str(self.user1.pk))
+        response = self.client.get(f"/get_user_details/{self.user1.username}")
 
         # check response 200 ok
         self.assertEqual(response.status_code, 200)
@@ -34,6 +34,6 @@ class Tests(TestCase):
     def test_get_user_error(self):
 
         # specify user to get data for 
-        response = self.client.post("/get_user/" + str(self.user1.pk))
+        response = self.client.post(f"/get_user_details/{self.user1.pk}")
 
         self.assertEqual(response.status_code, 400)

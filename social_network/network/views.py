@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.forms.models import model_to_dict
 
-from .models import User, Posts
+from .models import User, Posts, Follows
 
 
 def index(request):
@@ -72,8 +72,6 @@ def create_post(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST request required." }, status=400)
 
-    # POST request
-
     # load the data
     data = json.loads(request.body)
     post_text = data.get("text")
@@ -83,7 +81,7 @@ def create_post(request):
         # save new post to database
         new_post = Posts(user_id=request.user, text=post_text)
         new_post.save()
-        return HttpResponse(status=204)
+        return JsonResponse({"message": "Post created"}, status=201)
 
     except Exception as e:
         print(e)
@@ -109,8 +107,8 @@ def get_all_posts(request):
     except Posts.DoesNotExist:
         return JsonResponse({"error": "Posts do not exist"}, status=404)
 
-
-def get_user_posts(request, user_id):
+#@login_required
+def get_user_posts(request, username):
 
     if request.method != "GET":
         return JsonResponse({ "error": "GET request required." }, status=400)
@@ -118,7 +116,7 @@ def get_user_posts(request, user_id):
     # GET request
     try:
         # check to see if user exists
-        user = User.objects.get(pk=user_id)
+        user = User.objects.get(username=username)
 
         # get all posts for user
         # user_posts = Posts.objects.filter(user_id=user.pk)
@@ -130,11 +128,11 @@ def get_user_posts(request, user_id):
         # .serialize() is a method in the models
         return JsonResponse([post.serialize() for post in user_posts], safe=False, status=200)
 
-    except Posts.DoesNotExist and User.DoesNotExist :
+    except Posts.DoesNotExist and User.DoesNotExist:
         return JsonResponse({"error": "User has no posts"}, status=404)
 
 
-def get_user(request, user_id):
+def get_user_details(request, username):
 
     if request.method != "GET":
         return JsonResponse({ "error": "GET request required." }, status=400)
@@ -143,7 +141,7 @@ def get_user(request, user_id):
     try:
 
         # get user model object
-        user_model_object = User.objects.get(pk=user_id)
+        user_model_object = User.objects.get(username=username)
 
         # convert object to a dict to parse to JsonResponse
         user_dict = model_to_dict(user_model_object)
@@ -153,3 +151,91 @@ def get_user(request, user_id):
 
     except User.DoesNotExist:
         return JsonResponse({"error": "User does not exist"}, status=404)
+
+#@login_required
+def get_user_followers(request, username):
+
+    if request.method != "GET":
+        return JsonResponse({ "error": "GET request required." }, status=400)
+
+    try:
+
+        user = User.objects.get(username=username)
+
+        followers = user.user_followed_by
+
+        # have to use the .all() for iterable to work
+        return JsonResponse([follower.serialize() for follower in followers.all()], safe=False, status=200)
+
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User does not exist"}, status=404)
+
+#@login_required
+def get_user_following(request, username):
+
+    if request.method != "GET":
+        return JsonResponse({ "error": "GET request required." }, status=400)
+    
+    try:
+        user = User.objects.get(username=username)
+
+        followings = user.user_follows
+
+        return JsonResponse([follower.serialize() for follower in followings.all()], safe=False, status=200)
+
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User does not exist"}, status=404)
+
+
+@login_required
+def follow(request, username):
+    
+    if (request.method != "POST"):
+        return JsonResponse({ "error": "POST request required." }, status=400)
+
+    if (request.user.username == username):
+        return JsonResponse({ "message": "Cannot follow self" }, status=404)
+
+    try:
+        user_to_follow = User.objects.get(username=username)
+
+        obj, created = Follows.objects.get_or_create(
+            user_id=request.user, user_following=user_to_follow
+        )
+
+        # if already exists, invert the boolean (i.e. follow and unfollow)
+        if not created:
+            bool_value = obj.isFollowing
+            obj.isFollowing = not bool_value
+            obj.save()
+            return JsonResponse({ "message": "Updated follow status" }, status=200)
+        
+        return JsonResponse({ "message": "Created new follow" }, status=201)
+
+    except User.DoesNotExist: # what if multiple rows retruned to get?
+        return JsonResponse({ "error": "User does not exist." }, status=404)
+
+@login_required
+def edit_post(request):
+
+    if (request.method != "PUT"):
+        return JsonResponse({ "error": "PUT request required." }, status=400)
+    
+    # load the data
+    data = json.loads(request.body)
+    post_id = data.get("post_id")
+    post_text = data.get("text")
+
+    try:
+        # get post wanting to edit, must match logged in users own post
+        post = Posts.objects.get(pk=post_id, user_id=request.user)
+
+        # update text
+        post.text = post_text
+        post.save()
+        return JsonResponse({"message": "Post updated"}, status=200)
+        
+    except Posts.DoesNotExist:
+        return JsonResponse({"error": "Post not found"}, status=404)
+
+
