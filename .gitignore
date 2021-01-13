@@ -1,6 +1,6 @@
 # ignore db and related files
 *.sqlite3
-*/migrations/
+*/*/migrations/
 
 # mac files
 .DS_Store

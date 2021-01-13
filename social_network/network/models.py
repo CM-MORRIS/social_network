@@ -33,10 +33,18 @@ class Posts(models.Model):
             "number_of_likes": self.number_of_likes
         }
 
+    def like(self):
+        self.number_of_likes += 1
+        self.save()
+    
+    def unlike(self):
+        self.number_of_likes -= 1
+        self.save()
 
 class Follows(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_follows")
-    user_following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_followed_by")
+    user_following = models.ForeignKey(User, on_delete=models.CASCADE, 
+                                             related_name="user_followed_by")
     isFollowing = models.BooleanField(default=True)
 
     def serialize(self):
@@ -50,4 +58,11 @@ class Follows(models.Model):
 class Likes(models.Model):
     user_id  = models.ForeignKey(User, on_delete=models.CASCADE, related_name="all_user_likes")
     post_id  = models.ForeignKey(Posts, on_delete=models.CASCADE, related_name="all_post_likes")
-    isLiked  = models.BooleanField(default=True)
+    is_liked  = models.BooleanField(default=True)
+
+    def serialize(self):
+        return {
+            "user_id": self.user_id,
+            "post_id": self.post_id,
+            "isLiked": self.is_liked
+        }

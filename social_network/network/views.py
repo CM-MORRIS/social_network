@@ -2,12 +2,11 @@ import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.forms.models import model_to_dict
 
-from .models import User, Posts, Follows
+from .models import User, Posts, Follows, Likes
 
 
 def index(request):
@@ -140,14 +139,9 @@ def get_user_details(request, username):
     # GET request
     try:
 
-        # get user model object
-        user_model_object = User.objects.get(username=username)
+        user_obj = User.objects.get(username=username)
 
-        # convert object to a dict to parse to JsonResponse
-        user_dict = model_to_dict(user_model_object)
-
-        # user_dict is serialized to JSON within the JsonResponse and returned
-        return JsonResponse(user_dict, status=200)
+        return JsonResponse(user_obj.serialize(), status=200)
 
     except User.DoesNotExist:
         return JsonResponse({"error": "User does not exist"}, status=404)
@@ -165,7 +159,8 @@ def get_user_followers(request, username):
         followers = user.user_followed_by
 
         # have to use the .all() for iterable to work
-        return JsonResponse([follower.serialize() for follower in followers.all()], safe=False, status=200)
+        return JsonResponse([follower.serialize() for follower in followers.all()],
+                                safe=False, status=200)
 
     except User.DoesNotExist:
         return JsonResponse({"error": "User does not exist"}, status=404)
@@ -175,7 +170,7 @@ def get_user_following(request, username):
 
     if request.method != "GET":
         return JsonResponse({ "error": "GET request required." }, status=400)
-    
+
     try:
         user = User.objects.get(username=username)
 
@@ -239,3 +234,40 @@ def edit_post(request):
         return JsonResponse({"error": "Post not found"}, status=404)
 
 
+@login_required
+def like_post(request, post_id):
+
+    if (request.method != "PUT"):
+        return JsonResponse({ "error": "PUT request required." }, status=400)
+    
+    try:
+        # get the post to like/unlike
+        post = Posts.objects.get(pk=post_id)
+
+        # create a new like entry, or just get the row if already exists
+        obj, created = Likes.objects.get_or_create(
+            user_id=request.user, post_id=post
+        )
+
+        # if already exists, invert the boolean (i.e. like (True) and unlike (False))
+        if not created:
+            bool_value = obj.is_liked
+            obj.is_liked = not bool_value
+            obj.save()
+
+            # increase/decrease post like count
+            if (obj.is_liked):
+                post.like()
+            else:
+                post.unlike()
+
+            return JsonResponse({ "message": "Updated liked status" }, status=200)
+        
+        # increase like count on post on newly created like
+        post.like()
+        
+        # if user has never liked post before, create new record with default being liked (True)
+        return JsonResponse({ "message": "Created new like" }, status=201)
+        
+    except Posts.DoesNotExist:
+        return JsonResponse({"error": "Post not found"}, status=404)
