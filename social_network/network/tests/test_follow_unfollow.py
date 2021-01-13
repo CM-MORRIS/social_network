@@ -35,7 +35,7 @@ class Tests(TestCase):
 
         # is user4 following user1 automatically set to True on creation
         test_follow_true = Follows.objects.get(user_id=self.user4, user_following=self.user1)
-        self.assertTrue(test_follow_true.isFollowing)
+        self.assertTrue(test_follow_true.is_following)
 
     
     def test_unfollow(self):
@@ -46,7 +46,7 @@ class Tests(TestCase):
 
         # is user4 following user1 set to False for unfollow
         test_follow_false = Follows.objects.get(user_id=self.user4, user_following=self.user1)
-        self.assertFalse(test_follow_false.isFollowing)
+        self.assertFalse(test_follow_false.is_following)
 
         
     def test_refollow(self):
@@ -55,19 +55,19 @@ class Tests(TestCase):
         response = follow(self.request, self.user2.username)
         self.assertEqual(response.status_code, 201)
         obj = Follows.objects.get(user_id=self.user4, user_following=self.user2)
-        self.assertTrue(obj.isFollowing)
+        self.assertTrue(obj.is_following)
 
         # make second request to unfollow
         response = follow(self.request, self.user2.username)
         self.assertEqual(response.status_code, 200)
         obj = Follows.objects.get(user_id=self.user4, user_following=self.user2)
-        self.assertFalse(obj.isFollowing)
+        self.assertFalse(obj.is_following)
 
         # make third request to refollow
         response = follow(self.request, self.user2.username)
         self.assertEqual(response.status_code, 200)
         obj = Follows.objects.get(user_id=self.user4, user_following=self.user2)
-        self.assertTrue(obj.isFollowing)
+        self.assertTrue(obj.is_following)
     
 
     def test_follow_request_invalid_user(self):
