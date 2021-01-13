@@ -35,8 +35,8 @@ class Tests(TestCase):
         # Test create_post() as if it were deployed at /create_post
         response = create_post(request)
 
-        # 204 ok response
-        self.assertEqual(response.status_code, 204)
+        # 201 ok response
+        self.assertEqual(response.status_code, 201)
 
         # check a new post has been added to table for user
         self.assertEqual(self.user.user_posts.count(), 1)
