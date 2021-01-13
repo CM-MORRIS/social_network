@@ -51,7 +51,7 @@ class Tests(TestCase):
         
     def test_refollow(self):
 
-        # initial request to create a follow
+        # request to create a follow
         response = follow(self.request, self.user2.username)
         self.assertEqual(response.status_code, 201)
         obj = Follows.objects.get(user_id=self.user4, user_following=self.user2)
