@@ -1,16 +1,22 @@
 import json
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from rest_framework import viewsets
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response 
+from django.shortcuts import get_object_or_404
 
 from .models import User, Posts, Follows, Likes
+from .serializers import PostsSerializer, UserSerializer, FollowsSerializer, LikesSerializer
 
 
 def index(request):
-    return render(request, "network/index.html")
+    return render(request, "network/all_posts.html")
 
 
 def login_view(request):
@@ -65,209 +71,163 @@ def register(request):
         return render(request, "network/register.html")
 
 
-@login_required
+@permission_classes(IsAuthenticated)
+@api_view(['GET'])
+def user(request, username):
+
+    user = User.objects.get(username=username)
+    serializer = UserSerializer(user, many=False)
+
+    return JsonResponse(serializer.data, status=200)
+
+
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+def all_posts(request):
+
+    # get all posts ordered by date ascending
+    all_posts = Posts.objects.order_by("-date_time").all()
+    serializer = PostsSerializer(all_posts, many=True)
+
+    return Response(serializer.data, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def create_post(request):
 
-    if request.method != "POST":
-        return JsonResponse({"error": "POST request required." }, status=400)
-
     # load the data
     data = json.loads(request.body)
     post_text = data.get("text")
 
-    try:
+    data = {
+        "user_id": request.user.pk,
+        "text": post_text
+    }
 
-        # save new post to database
-        new_post = Posts(user_id=request.user, text=post_text)
-        new_post.save()
+    serializer = PostsSerializer(data=data)
+
+    if serializer.is_valid(raise_exception=True):
+        serializer.save()
+
         return JsonResponse({"message": "Post created"}, status=201)
 
-    except Exception as e:
-        print(e)
-        return JsonResponse({"error": "Cannot create post."}, status=404)
+
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+def user_posts(request, user_id):
+
+    user_posts = Posts.objects.order_by("-date_time").filter(user_id=user_id)
+    serializer = PostsSerializer(user_posts, many=True)
+
+    return JsonResponse(serializer.data, status=200, safe=False)
 
 
-def get_all_posts(request):
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+def user_followers(request, user_id):
 
-    if request.method != "GET":
-        return JsonResponse({ "error": "GET request required." }, status=400)
+    user = get_object_or_404(User, pk=user_id)
+    followers = user.user_followed_by
+    serializer = FollowsSerializer(followers, many=True)
 
-    # GET request
-
-    try:
-        all_posts = Posts.objects.all()
-
-        # Return posts in reverse chronologial order
-        all_posts = all_posts.order_by("-date_time").all()
-
-        # .serialize() is a method in the models
-        return JsonResponse([post.serialize() for post in all_posts], safe=False, status=200)
-
-    except Posts.DoesNotExist:
-        return JsonResponse({"error": "Posts do not exist"}, status=404)
-
-#@login_required
-def get_user_posts(request, username):
-
-    if request.method != "GET":
-        return JsonResponse({ "error": "GET request required." }, status=400)
-
-    # GET request
-    try:
-        # check to see if user exists
-        user = User.objects.get(username=username)
-
-        # get all posts for user
-        # user_posts = Posts.objects.filter(user_id=user.pk)
-        user_posts = user.user_posts
-
-        # Return posts in reverse chronologial order
-        user_posts = user_posts.order_by("-date_time").all()
-
-        # .serialize() is a method in the models
-        return JsonResponse([post.serialize() for post in user_posts], safe=False, status=200)
-
-    except Posts.DoesNotExist and User.DoesNotExist:
-        return JsonResponse({"error": "User has no posts"}, status=404)
+    return JsonResponse(serializer.data, status=200, safe=False)
 
 
-def get_user_details(request, username):
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+def user_following(request, user_id):
 
-    if request.method != "GET":
-        return JsonResponse({ "error": "GET request required." }, status=400)
-
-    # GET request
-    try:
-
-        user_obj = User.objects.get(username=username)
-
-        return JsonResponse(user_obj.serialize(), status=200)
-
-    except User.DoesNotExist:
-        return JsonResponse({"error": "User does not exist"}, status=404)
-
-#@login_required
-def get_user_followers(request, username):
-
-    if request.method != "GET":
-        return JsonResponse({ "error": "GET request required." }, status=400)
-
-    try:
-
-        user = User.objects.get(username=username)
-
-        followers = user.user_followed_by
-
-        # have to use the .all() for iterable to work
-        return JsonResponse([follower.serialize() for follower in followers.all()],
-                                safe=False, status=200)
-
-    except User.DoesNotExist:
-        return JsonResponse({"error": "User does not exist"}, status=404)
-
-#@login_required
-def get_user_following(request, username):
-
-    if request.method != "GET":
-        return JsonResponse({ "error": "GET request required." }, status=400)
-
-    try:
-        user = User.objects.get(username=username)
-
-        followings = user.user_follows
-
-        return JsonResponse([follower.serialize() for follower in followings.all()], safe=False, status=200)
-
-    except User.DoesNotExist:
-        return JsonResponse({"error": "User does not exist"}, status=404)
+    user = get_object_or_404(User, pk=user_id)
+    follows = user.user_follows
+    serializer = FollowsSerializer(follows, many=True)
+    return JsonResponse(serializer.data, status=200, safe=False)
 
 
-@login_required
-def follow(request, username):
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
+def follow(request, user_id):
     
-    if (request.method != "POST"):
-        return JsonResponse({ "error": "POST request required." }, status=400)
+    user_to_follow = get_object_or_404(User, pk=user_id)
 
-    if (request.user.username == username):
+    if (request.user.pk == user_id):
         return JsonResponse({ "message": "Cannot follow self" }, status=404)
 
-    try:
-        user_to_follow = User.objects.get(username=username)
 
-        obj, created = Follows.objects.get_or_create(
-            user_id=request.user, user_following=user_to_follow
-        )
+    obj, created = Follows.objects.get_or_create(
+        user_id=request.user, user_following=user_to_follow
+    )
 
-        # if already exists, invert the boolean (i.e. follow and unfollow)
-        if not created:
-            bool_value = obj.is_following
-            obj.is_following = not bool_value
-            obj.save()
-            return JsonResponse({ "message": "Updated follow status" }, status=200)
-        
-        return JsonResponse({ "message": "Created new follow" }, status=201)
+    # if already exists, invert the boolean (i.e. follow and unfollow)
+    if not created:
+        bool_value = obj.is_following
+        obj.is_following = not bool_value
+        obj.save()
+        return JsonResponse({ "message": "Updated follow status" }, status=200)
+    
+    return JsonResponse({ "message": "Created new follow" }, status=201)
 
-    except User.DoesNotExist: # what if multiple rows retruned to get?
-        return JsonResponse({ "error": "User does not exist." }, status=404)
 
-@login_required
+
+@permission_classes([IsAuthenticated])
+@api_view(['PUT'])
 def edit_post(request):
 
-    if (request.method != "PUT"):
-        return JsonResponse({ "error": "PUT request required." }, status=400)
-    
     # load the data
     data = json.loads(request.body)
-    post_id = data.get("post_id")
-    post_text = data.get("text")
+  
+    edited_post = {
+        "user_id": request.user.pk,
+        "text": data.get("text")
+    }
 
-    try:
-        # get post wanting to edit, must match logged in users own post
-        post = Posts.objects.get(pk=post_id, user_id=request.user)
+    post = get_object_or_404(Posts, pk=data.get("post_id"))
 
-        # update text
-        post.text = post_text
-        post.save()
+    serializer = PostsSerializer(post, data=edited_post)
+
+    if serializer.is_valid():
+        serializer.save()
         return JsonResponse({"message": "Post updated"}, status=200)
-        
-    except Posts.DoesNotExist:
-        return JsonResponse({"error": "Post not found"}, status=404)
 
 
-@login_required
+@permission_classes([IsAuthenticated])
+@api_view(['PUT'])
 def like_post(request, post_id):
 
-    if (request.method != "PUT"):
-        return JsonResponse({ "error": "PUT request required." }, status=400)
+    # get the post to like/unlike
+    post = get_object_or_404(Posts, pk=post_id)
+
+    # create a new like entry, or just get the row if already exists
+    obj, created = Likes.objects.get_or_create(
+        user_id=request.user, post_id=post
+    )
+
+    # if already exists, invert the boolean (i.e. like (True) and unlike (False))
+    if not created:
+        bool_value = obj.is_liked
+        obj.is_liked = not bool_value
+        obj.save()
+
+        # increase/decrease post like count
+        if (obj.is_liked):
+            post.number_of_likes += 1
+        else:
+            post.number_of_likes -= 1
+        
+        post.save()
+
+        return JsonResponse({ "message": "Updated liked status",
+                                "like_count": post.number_of_likes}, status=200)
     
-    try:
-        # get the post to like/unlike
-        post = Posts.objects.get(pk=post_id)
+    # like doest exist 
 
-        # create a new like entry, or just get the row if already exists
-        obj, created = Likes.objects.get_or_create(
-            user_id=request.user, post_id=post
-        )
+    # increase like count on post on newly created like
+    post.number_of_likes += 1
+    post.save()
 
-        # if already exists, invert the boolean (i.e. like (True) and unlike (False))
-        if not created:
-            bool_value = obj.is_liked
-            obj.is_liked = not bool_value
-            obj.save()
-
-            # increase/decrease post like count
-            if (obj.is_liked):
-                post.like()
-            else:
-                post.unlike()
-
-            return JsonResponse({ "message": "Updated liked status" }, status=200)
+    
+    # if user has never liked post before, create new record with default being liked (True)
+    return JsonResponse({ "message": "Created new like",
+                            "like_count": post.number_of_likes }, status=201)
         
-        # increase like count on post on newly created like
-        post.like()
-        
-        # if user has never liked post before, create new record with default being liked (True)
-        return JsonResponse({ "message": "Created new like" }, status=201)
-        
-    except Posts.DoesNotExist:
-        return JsonResponse({"error": "Post not found"}, status=404)
+    

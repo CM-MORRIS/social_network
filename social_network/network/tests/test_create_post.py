@@ -1,4 +1,7 @@
-from django.test import Client, TestCase, RequestFactory
+from django.test import TestCase
+from rest_framework.test import APIClient
+from rest_framework.test import force_authenticate
+from rest_framework.test import APIRequestFactory
 from network.models import User, Posts
 from network.views import create_post
 
@@ -11,62 +14,49 @@ class Tests(TestCase):
         # Every test needs access to the request factory.
         # Session and authentication attributes must be supplied
         # by the test itself if required for the view to function properly.
-        self.factory = RequestFactory()
-        self.client = Client()
+        self.factory = APIRequestFactory()
+        self.client = APIClient()
 
         self.user = User.objects.create_user(
             username='test-user', email='test@mail.com', password='secret')
 
-        self.data = {'text': 'This is a post'}
+        self.data = {"text": "This is a post"}
 
-    # test that when a POST is made to 'create_post' view
-    # that a post is created by logged in user
+        # Create an instance of a POST request.
+        self.request = self.factory.post(
+            '/api/create_post', self.data, format='json')
+
+        force_authenticate(self.request, user=self.user)
+
 
     def test_create_post(self):
 
-        # Create an instance of a POST request.
-        request = self.factory.post(
-            '/create_post', self.data, content_type='application/json')
-
-        # Recall that middleware are not supported. You can simulate a
-        # logged-in user by setting request.user manually.
-        request.user = self.user
-
         # Test create_post() as if it were deployed at /create_post
-        response = create_post(request)
+        response = create_post(self.request)
+
+        # response = self.client.post('/create_post', self.data, format='json')
 
         # 201 ok response
         self.assertEqual(response.status_code, 201)
 
-        # check a new post has been added to table for user
-        self.assertEqual(self.user.user_posts.count(), 1)
+        # # check a new post has been added to table for user
+        # self.assertEqual(self.user.user_posts.count(), 1)
 
         # test the newly created post matches test post data
         post = Posts.objects.get(user_id=self.user)
         self.assertEqual(post.text, self.data.get("text"))
 
+
     def test_create_post_bad_request(self):
 
-        # Create an instance of a GET request.
-        request = self.factory.get(
-            '/create_post', self.data, content_type='application/json')
+        invalid_data = {"not_valid": "not a valid request"}
 
-        # Recall that middleware are not supported. You can simulate a
-        # logged-in user by setting request.user manually.
-        request.user = self.user
+        request = self.factory.post(
+        '/api/create_post', invalid_data, format='json')
 
-        # Test create_post() as if it were deployed at /create_post
+        force_authenticate(request, user=self.user)
+
         response = create_post(request)
 
         # bad request
         self.assertEqual(response.status_code, 400)
-
-    def test_create_post_not_logged_in(self):
-
-        # no user logged in when making this request
-        response = self.client.post("/create_post",
-                                    self.data, content_type='application/json')
-
-        # '@login_required' in views redirects to the
-        # login page if the user is not logged in so returns 302
-        self.assertEqual(response.status_code, 302)
