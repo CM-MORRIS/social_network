@@ -1,5 +1,6 @@
 import json
-from django.test import Client, TestCase
+from django.test import TestCase
+from rest_framework.test import APIClient
 from network.models import User, Posts
 from django.db.models import Max
 
@@ -11,12 +12,15 @@ class Tests(TestCase):
 
         self.INVALID_USER_STRING = "This is invalid!"
 
-        self.client = Client()
+        self.client = APIClient()
 
         # test users to create the test posts
-        self.user1 = User.objects.create_user(username='test-user1')
+        self.user1 = User.objects.create_user(username='test-user1', password="secret")
         self.user2 = User.objects.create_user(username='test-user2')
         self.user3 = User.objects.create_user(username='test-user3')
+
+        # log in user1 just to bypass 'must be logged in' permission
+        self.client.login(username='test-user1', password='secret')
 
         # get the max id for users
         self.MAX_ID = User.objects.all().aggregate(Max('id'))["id__max"]
@@ -31,7 +35,7 @@ class Tests(TestCase):
     def test_get_all_posts(self):
 
         # assert correct number is returned
-        response = self.client.get("/all_posts")
+        response = self.client.get("/api/all_posts")
 
         # load response to python dict
         json_dict = json.loads(response.content)
@@ -42,18 +46,12 @@ class Tests(TestCase):
         # are all posts returned
         self.assertEqual(len(json_dict), 4)
     
-    def test_get_all_posts_bad_request(self):
-
-        # cannot make a POST request to this endpoint
-        response = self.client.post("/all_posts")
-        self.assertEqual(response.status_code, 400)
-
 
     # getting user posts when they exist
     def test_get_user_posts(self):
 
         # request to get all posts for user1
-        response = self.client.get(f"/get_user_posts/{self.user1.username}")
+        response = self.client.get(f"/api/user_posts/{self.user1.pk}")
 
         # load response to python dict
         json_dict = json.loads(response.content)
@@ -63,33 +61,3 @@ class Tests(TestCase):
 
         # are all posts returned
         self.assertEqual(len(json_dict), 2)
-
-
-    # get user posts when they don't exist
-    def test_get_user_posts_return_zero(self):
-
-        # request to get non-existent posts for user3
-        response = self.client.get(f"/get_user_posts/{self.user3.username}")
-
-        # load response to python dict
-        json_dict = json.loads(response.content)
-
-        # assert response is as expected
-        self.assertEqual(response.status_code, 200)
-
-        # zero posts should be returned
-        self.assertEqual(len(json_dict), 0)
-
-
-    def test_get_user_posts_bad_request(self):
-
-        # invalid POST request
-        response = self.client.post(f"/get_user_posts/{self.user1.username}")
-        self.assertEqual(response.status_code, 400)
-
-
-    def test_get_user_posts_invalid_user(self):
-
-        # invalid user
-        response = self.client.get(f"/get_user_posts/{self.INVALID_USER_STRING}")
-        self.assertEqual(response.status_code, 404)

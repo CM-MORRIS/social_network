@@ -1,5 +1,7 @@
 import json
-from django.test import Client, TestCase
+from django.test import TestCase
+from rest_framework.test import APIClient
+
 from network.models import User, Follows
 
 
@@ -7,16 +9,19 @@ class Tests(TestCase):
 
     def setUp(self):
 
-        self.INVALID_USERNAME = "This is an invalid username!"
+        self.INVALID_USER = 99
 
-        self.client = Client()
+        self.client = APIClient()
 
         # test users
-        self.user1 = User.objects.create_user(username='test-user1')
+        self.user1 = User.objects.create_user(username='test-user1', password="secret")
         self.user2 = User.objects.create_user(username='test-user2')
         self.user3 = User.objects.create_user(username='test-user3')
         self.user4 = User.objects.create_user(username='test-user4')
         self.user5 = User.objects.create_user(username='test-user5')
+
+        # log in user1 just to bypass 'must be logged in' permission
+        self.client.login(username='test-user1', password='secret')
 
         # test follows (users 1, 2, 4, 5 follow user3)
         Follows.objects.create(user_id=self.user1, user_following=self.user3)
@@ -25,10 +30,10 @@ class Tests(TestCase):
         Follows.objects.create(user_id=self.user5, user_following=self.user3)
 
 
-    def test_get_user_followers_count(self):
+    def test_user_followers_count(self):
 
-        # get followers cound for user3
-        response = self.client.get(f"/get_user_followers/{self.user3.username}")
+        # get followers for user3
+        response = self.client.get(f"/api/user_followers/{self.user3.pk}")
 
         # check response 200 ok
         self.assertEqual(response.status_code, 200)
@@ -40,17 +45,12 @@ class Tests(TestCase):
         self.assertEqual(len(resp_dict), 4)
         
 
-    def test_get_user_followers_count_error(self):
+    def test_user_followers_user_not_found(self):
 
         # get followers cound for user3
-        response = self.client.get(f"/get_user_followers/{self.INVALID_USERNAME}")
+        response = self.client.get(f"/api/user_followers/{self.INVALID_USER}")
 
         # check response 404 not found
         self.assertEqual(response.status_code, 404)
 
-        # make invalid post request
-        response = self.client.post(f"/get_user_followers/{self.user3.username}")
-
-        # check invalid request
-        self.assertEqual(response.status_code, 400)
         

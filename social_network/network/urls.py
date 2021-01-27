@@ -1,23 +1,27 @@
-from django.urls import path
+from django.urls import path, include
 
-from . import views
+# import everything from views 
+from network.views import *
+
+# import routers and viewsets
+from rest_framework import routers, viewsets
 
 urlpatterns = [
-    path("", views.index, name="index"),
-    path("login", views.login_view, name="login"),
-    path("logout", views.logout_view, name="logout"),
-    path("register", views.register, name="register"),
+
+    path("", index, name="index"),
+    path("login", login_view, name="login"),
+    path("logout", logout_view, name="logout"),
+    path("register", register, name="register"),
 
     # API Routes
-    path("create_post", views.create_post, name="create_post"),
-    path("all_posts", views.get_all_posts, name="get_all_posts"),
-    path("get_user_posts/<str:username>", views.get_user_posts, name="get_user_posts"),
-    path("get_user_details/<str:username>", views.get_user_details, name="get_user_details"),
-    path("get_user_followers/<str:username>", views.get_user_followers, name="get_user_followers"),
-    path("get_user_following/<str:username>", views.get_user_following, name="get_user_following"),
-    path("follow/<str:username>", views.follow, name="follow"),
-    path("edit_post", views.edit_post, name="edit_post")
-
-
+    path("create_post", create_post, name="create_post"),
+    path("all_posts", all_posts, name="all_posts"),
+    path("user_posts/<str:user_id>", user_posts, name="user_posts"),
+    path("user/<str:username>", user, name="user"),
+    path("user_followers/<str:user_id>", user_followers, name="user_followers"),
+    path("user_following/<str:user_id>", user_following, name="user_following"),
+    path("follow/<str:user_id>", follow, name="follow"),
+    path("edit_post", edit_post, name="edit_post"),
+    path("like_post/<int:post_id>", like_post, name="like_post")
 
 ]

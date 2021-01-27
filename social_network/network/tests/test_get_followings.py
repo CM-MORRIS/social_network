@@ -1,5 +1,6 @@
 import json
-from django.test import Client, TestCase
+from django.test import TestCase
+from rest_framework.test import APIClient
 from network.models import User, Follows
 
 
@@ -7,15 +8,18 @@ class Tests(TestCase):
 
     def setUp(self):
 
-        self.INVALID_USERNAME = "This is an invalid username!"
+        self.INVALID_ID = 99
 
-        self.client = Client()
+        self.client = APIClient()
 
         # test users
-        self.user1 = User.objects.create_user(username='test-user1')
+        self.user1 = User.objects.create_user(username='test-user1', password="secret")
         self.user2 = User.objects.create_user(username='test-user2')
         self.user3 = User.objects.create_user(username='test-user3')
         self.user4 = User.objects.create_user(username='test-user4')
+
+        self.client.login(username='test-user1', password='secret')
+
 
         # test follows (user 1 follows user 2, 3, and 4)
         Follows.objects.create(user_id=self.user1, user_following=self.user2)
@@ -26,7 +30,7 @@ class Tests(TestCase):
     def test_get_user_following_count(self):
 
         # get followers cound for user1
-        response = self.client.get(f"/get_user_following/{self.user1.username}")
+        response = self.client.get(f"/api/user_following/{self.user1.pk}")
 
         # check response 200 ok
         self.assertEqual(response.status_code, 200)
@@ -40,15 +44,15 @@ class Tests(TestCase):
 
     def test_get_user_followers_count_error(self):
 
-        # get followers cound for user3
-        response = self.client.get(f"/get_user_following/{self.INVALID_USERNAME}")
+        # get followers count for user3
+        response = self.client.get(f"/api/user_following/{self.INVALID_ID}")
 
         # check response 404 not found
         self.assertEqual(response.status_code, 404)
 
         # make invalid post request
-        response = self.client.post(f"/get_user_following/{self.user3.username}")
+        response = self.client.post(f"/api/user_following/{self.user3.pk}")
 
-        # check invalid request
-        self.assertEqual(response.status_code, 400)
+        # check invalid method not allowed request
+        self.assertEqual(response.status_code, 405)
         

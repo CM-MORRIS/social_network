@@ -1,4 +1,5 @@
-from django.test import Client, TestCase, RequestFactory
+from django.test import TestCase
+from rest_framework.test import APIClient, APIRequestFactory, force_authenticate
 from network.models import User, Posts, Likes
 from network.views import like_post
 
@@ -6,8 +7,8 @@ class Tests(TestCase):
 
     def setUp(self):
 
-        self.client = Client()
-        self.factory = RequestFactory()
+        self.client = APIClient()
+        self.factory = APIRequestFactory()
 
         # test users
         self.user1 = User.objects.create_user(username='test-user1')
@@ -17,8 +18,8 @@ class Tests(TestCase):
         self.post1 = Posts.objects.create(pk=1, user_id=self.user2, text="Test post user1")
 
         # Simulate logged-in user1 by setting request.user manually.
-        self.request = self.factory.put(f"/like_post/{self.post1.pk}")
-        self.request.user = self.user1
+        self.request = self.factory.put(f"/api/like_post/{self.post1.pk}")
+        force_authenticate(self.request, user=self.user1)
 
 
     def test_new_like(self):
@@ -62,7 +63,7 @@ class Tests(TestCase):
         self.assertEqual(response.status_code, 201)
 
         # log in user2
-        self.request.user = self.user2
+        force_authenticate(self.request, user=self.user2)
 
         # user2 like post1
         response = like_post(self.request, self.post1.pk)
