@@ -1,5 +1,5 @@
 import json
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
@@ -10,69 +10,50 @@ from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response 
 from django.shortcuts import get_object_or_404
+from rest_framework import status, permissions
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User, Posts, Follows, Likes
-from .serializers import PostsSerializer, UserSerializer, FollowsSerializer, LikesSerializer
+from .serializers import PostsSerializer, UserSerializer, FollowsSerializer, LikesSerializer, RegistrationSerializer
 
 
-def index(request):
-    return render(request, "network/all_posts.html")
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def logoutAndBlacklistRefreshTokenForUser(request):
 
+    try:
+        refresh_token = request.data["refresh_token"]
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response(status=status.HTTP_205_RESET_CONTENT)
 
-def login_view(request):
-    if request.method == "POST":
+    except:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        # Attempt to sign user in
-        username = request.POST["username"]
-        password = request.POST["password"]
-        user = authenticate(request, username=username, password=password)
-
-        # Check if authentication successful
-        if user is not None:
-            login(request, user)
-            return HttpResponseRedirect(reverse("index"))
-        else:
-            return render(request, "network/login.html", {
-                "message": "Invalid username and/or password."
-            })
-    else:
-        return render(request, "network/login.html")
-
-
-def logout_view(request):
-    logout(request)
-    return HttpResponseRedirect(reverse("index"))
-
-
-def register(request):
-    if request.method == "POST":
-        username = request.POST["username"]
-        email = request.POST["email"]
-
-        # Ensure password matches confirmation
-        password = request.POST["password"]
-        confirmation = request.POST["confirmation"]
-        if password != confirmation:
-            return render(request, "network/register.html", {
-                "message": "Passwords must match."
-            })
-
-        # Attempt to create new user
-        try:
-            user = User.objects.create_user(username, email, password)
-            user.save()
-        except IntegrityError:
-            return render(request, "network/register.html", {
-                "message": "Username already taken."
-            })
-        login(request, user)
-        return HttpResponseRedirect(reverse("index"))
-    else:
-        return render(request, "network/register.html")
-
-
-@permission_classes(IsAuthenticated)
+ 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def helloWorldView(request):
+
+    return JsonResponse({"hello":"hello, world"}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_user(request):
+
+    serializer = RegistrationSerializer(data=request.data)
+
+    if serializer.is_valid(raise_exception=True):
+        serializer.save()
+        return JsonResponse({"message":"Successfully registered user"}, status=status.HTTP_201_CREATED)
+    else:
+        return JsonResponse({"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+   
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def user(request, username):
 
     user = User.objects.get(username=username)
@@ -80,9 +61,8 @@ def user(request, username):
 
     return JsonResponse(serializer.data, status=200)
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def all_posts(request):
 
     # get all posts ordered by date ascending
@@ -113,8 +93,8 @@ def create_post(request):
         return JsonResponse({"message": "Post created"}, status=201)
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def user_posts(request, user_id):
 
     user_posts = Posts.objects.order_by("-date_time").filter(user_id=user_id)
@@ -123,8 +103,8 @@ def user_posts(request, user_id):
     return JsonResponse(serializer.data, status=200, safe=False)
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def user_followers(request, user_id):
 
     user = get_object_or_404(User, pk=user_id)
@@ -133,9 +113,8 @@ def user_followers(request, user_id):
 
     return JsonResponse(serializer.data, status=200, safe=False)
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def user_following(request, user_id):
 
     user = get_object_or_404(User, pk=user_id)
@@ -144,8 +123,8 @@ def user_following(request, user_id):
     return JsonResponse(serializer.data, status=200, safe=False)
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def follow(request, user_id):
     
     user_to_follow = get_object_or_404(User, pk=user_id)
@@ -168,9 +147,8 @@ def follow(request, user_id):
     return JsonResponse({ "message": "Created new follow" }, status=201)
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def edit_post(request):
 
     # load the data
@@ -190,8 +168,8 @@ def edit_post(request):
         return JsonResponse({"message": "Post updated"}, status=200)
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def like_post(request, post_id):
 
     # get the post to like/unlike
@@ -225,7 +203,6 @@ def like_post(request, post_id):
     post.number_of_likes += 1
     post.save()
 
-    
     # if user has never liked post before, create new record with default being liked (True)
     return JsonResponse({ "message": "Created new like",
                             "like_count": post.number_of_likes }, status=201)
