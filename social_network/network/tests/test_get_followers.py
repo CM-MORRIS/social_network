@@ -1,6 +1,9 @@
 import json
 from django.test import TestCase
-from rest_framework.test import APIClient
+from rest_framework.test import force_authenticate, APIRequestFactory, APIClient
+
+from network.views import user_followers
+
 
 from network.models import User, Follows
 
@@ -12,29 +15,33 @@ class Tests(TestCase):
         self.INVALID_USER = 99
 
         self.client = APIClient()
+        self.factory = APIRequestFactory()
 
         # test users
-        self.user1 = User.objects.create_user(username='test-user1', password="secret")
-        self.user2 = User.objects.create_user(username='test-user2')
-        self.user3 = User.objects.create_user(username='test-user3')
-        self.user4 = User.objects.create_user(username='test-user4')
-        self.user5 = User.objects.create_user(username='test-user5')
+        self.user1 = User.objects.create_user(first_name="test", last_name="test", email="test1@email.com", password="secret", username='test-user1')
+        self.user2 = User.objects.create_user(first_name="test", last_name="test", email="test2@email.com", password="secret", username='test-user2')
+        self.user3 = User.objects.create_user(first_name="test", last_name="test", email="test3@email.com", password="secret", username='test-user3')
+        self.user4 = User.objects.create_user(first_name="test", last_name="test", email="test4@email.com", password="secret", username='test-user4')
+        self.user5 = User.objects.create_user(first_name="test", last_name="test", email="test5@email.com", password="secret", username='test-user5')
 
-        # log in user1 just to bypass 'must be logged in' permission
-        self.client.login(username='test-user1', password='secret')
 
+        self.user = User.objects.get(username='test-user1')
+        
+        
         # test follows (users 1, 2, 4, 5 follow user3)
         Follows.objects.create(user_id=self.user1, user_following=self.user3)
         Follows.objects.create(user_id=self.user2, user_following=self.user3)
         Follows.objects.create(user_id=self.user4, user_following=self.user3)
         Follows.objects.create(user_id=self.user5, user_following=self.user3)
 
+        self.request = self.factory.get("/api-auth/user_followers/")
+        force_authenticate(self.request, user=self.user)
+
 
     def test_user_followers_count(self):
 
-        # get followers for user3
-        response = self.client.get(f"/api/user_followers/{self.user3.pk}")
-
+        response = user_followers(self.request, self.user3.username)
+      
         # check response 200 ok
         self.assertEqual(response.status_code, 200)
 
@@ -42,13 +49,12 @@ class Tests(TestCase):
         resp_dict = json.loads(response.content)
 
         # assert there are 4 followers for user3
-        self.assertEqual(len(resp_dict), 4)
+        self.assertEqual(resp_dict['followersCount'], 4)
         
 
     def test_user_followers_user_not_found(self):
-
-        # get followers cound for user3
-        response = self.client.get(f"/api/user_followers/{self.INVALID_USER}")
+       
+        response = user_followers(self.request, self.INVALID_USER)
 
         # check response 404 not found
         self.assertEqual(response.status_code, 404)

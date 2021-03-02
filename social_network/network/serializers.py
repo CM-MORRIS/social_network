@@ -1,6 +1,42 @@
 from .models import User, Posts, Follows, Likes
 from rest_framework import serializers
 
+class RegistrationSerializer(serializers.ModelSerializer):
+
+    password = serializers.CharField(style={'input_type' : 'password'}, min_length=8, write_only=True, required=True)
+    confirm_password = serializers.CharField(style={'input_type' : 'password'}, min_length=8, write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'username', 'password', 'confirm_password']
+
+        # read only for security
+        extra_kwargs = {
+            'password': { 'write_only': True }
+        }
+
+    # if call .save in views this will get called
+    def save(self):
+
+        user = User (
+            email=self.validated_data['email'],
+            username=self.validated_data['username'],
+            first_name=self.validated_data['first_name'],
+            last_name=self.validated_data['last_name'],
+        )
+
+        password=self.validated_data['password']
+        confirm_password=self.validated_data['confirm_password']
+
+        if password != confirm_password:
+            raise serializers.ValidationError({'password': 'passwords must match'})
+
+        user.set_password(password)
+        user.save()
+        
+        return user
+
+
 class UserSerializer(serializers.ModelSerializer):
 
     # the classes' class that creates the class
@@ -8,7 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
     # this Meta class actually creates the UserSerializer object 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'username', 'email']
+        fields = ['id', 'first_name', 'last_name', 'username', 'email']
 
 
 class PostsSerializer(serializers.ModelSerializer):

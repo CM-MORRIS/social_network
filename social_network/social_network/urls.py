@@ -18,7 +18,8 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('network.urls')),
-    path('', include('frontend.urls'))
+    path('api-auth/', include('network.urls')),
+    #path('api-auth/', include('authentication.urls')), # for authentication jwt
+    path('', include('frontend.urls')), # must be at end as checks for urls in order, otherwise every route will go here
 
 ]

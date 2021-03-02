@@ -9,8 +9,8 @@ class Tests(TestCase):
     def setUp(self):
 
         # test users
-        self.user1 = User.objects.create_user(username='test-user1')
-        self.user2 = User.objects.create_user(username='test-user2')
+        self.user1 = User.objects.create_user(first_name="test", last_name="test", email="test1@email.com", password="secret", username='test-user1')
+        self.user2 = User.objects.create_user(first_name="test", last_name="test", email="test2@email.com", password="secret", username='test-user2')
 
         # test post for user1
         Posts.objects.create(pk=1, user_id=self.user1, text="Test post user1")
