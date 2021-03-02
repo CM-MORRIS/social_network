@@ -1,8 +1,11 @@
 import json
 from django.test import TestCase
-from rest_framework.test import APIClient
+from rest_framework.test import force_authenticate, APIRequestFactory, APIClient
 from network.models import User, Posts
 from django.db.models import Max
+
+from network.views import all_posts, user_posts
+
 
 # These tests will test getting all posts that exist and getting specific user posts
 
@@ -13,15 +16,13 @@ class Tests(TestCase):
         self.INVALID_USER_STRING = "This is invalid!"
 
         self.client = APIClient()
+        self.factory = APIRequestFactory()
 
         # test users to create the test posts
-        self.user1 = User.objects.create_user(username='test-user1', password="secret")
-        self.user2 = User.objects.create_user(username='test-user2')
-        self.user3 = User.objects.create_user(username='test-user3')
-
-        # log in user1 just to bypass 'must be logged in' permission
-        self.client.login(username='test-user1', password='secret')
-
+        self.user1 = User.objects.create_user(first_name="test", last_name="test", email="test1@email.com", password="secret", username='test-user1')
+        self.user2 = User.objects.create_user(first_name="test", last_name="test", email="test2@email.com", password="secret", username='test-user2')
+        self.user3 = User.objects.create_user(first_name="test", last_name="test", email="test3@email.com", password="secret", username='test-user3')
+        
         # get the max id for users
         self.MAX_ID = User.objects.all().aggregate(Max('id'))["id__max"]
 
@@ -32,26 +33,34 @@ class Tests(TestCase):
         Posts.objects.create(user_id=self.user2, text="Test post user 2, no.2")
 
 
+    
     def test_get_all_posts(self):
 
-        # assert correct number is returned
-        response = self.client.get("/api/all_posts")
+        request = self.factory.get("/api-auth/all_posts/")
+        force_authenticate(request, user=self.user1)
 
-        # load response to python dict
-        json_dict = json.loads(response.content)
+        # get all posts
+        response = all_posts(request)
 
-        # assert response is as expected
+        # check response 200 ok
         self.assertEqual(response.status_code, 200)
 
+        # load response to python dict
+        res_dict = json.loads(response.content)
+
         # are all posts returned
-        self.assertEqual(len(json_dict), 4)
+        self.assertEqual(len(res_dict), 4)
     
 
     # getting user posts when they exist
     def test_get_user_posts(self):
 
         # request to get all posts for user1
-        response = self.client.get(f"/api/user_posts/{self.user1.pk}")
+        request = self.factory.get("/api-auth/user_posts")
+        force_authenticate(request, user=self.user1)
+
+        # get all posts
+        response = user_posts(request, self.user1.pk)
 
         # load response to python dict
         json_dict = json.loads(response.content)

@@ -79,9 +79,6 @@ class User(AbstractBaseUser):
         return True
 
     
-
-
-
 class Posts(models.Model):
     # 'related_name' is a reverse relationship i.e. user_posts = user has made all these posts 
     user_id   = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_posts")
@@ -92,8 +89,7 @@ class Posts(models.Model):
 
 class Follows(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_follows")
-    user_following = models.ForeignKey(User, on_delete=models.CASCADE, 
-                                             related_name="user_followed_by")
+    user_following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_followed_by")
     is_following = models.BooleanField(default=True)
 
 

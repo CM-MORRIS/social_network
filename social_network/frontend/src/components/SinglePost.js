@@ -1,13 +1,17 @@
 import React, { Component } from "react";
+import { Switch, Route, Link } from "react-router-dom";
 import axiosInstance from "../axiosApi";
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
+import Profile from "./Profile";
+
 
 class SinglePost extends Component {
   constructor(props) {
     super(props);
     this.state = {
       postId: props.postId,
+      userId: props.userId,
       username: props.username,
       text: props.text,
       likes: props.likes,
@@ -42,7 +46,11 @@ class SinglePost extends Component {
     return (
       <Card style={{ width: "18rem" }}>
         <Card.Body>
-          <Card.Title>{this.state.username}</Card.Title>
+          <Card.Title>
+
+          <Link className={"nav-link"} to={`/profile/${this.props.username}`}>{this.props.username}</Link>
+                    
+          </Card.Title>
           <Card.Subtitle className="mb-2 text-muted">
             {this.state.dateTime}
           </Card.Subtitle>
@@ -54,7 +62,17 @@ class SinglePost extends Component {
             {this.state.likes}
           </Card.Subtitle>
         </Card.Body>
+
+            
+            {/* <Route  path={`/profile/${this.state.username}`} 
+                    render={
+                        (props) => <Profile {...props} userId={this.state.userId} />
+            } /> */}
+
+            {/* <Route path="/profile/:username" component={Profile}/> */}
+
       </Card>
+
     );
   }
 }

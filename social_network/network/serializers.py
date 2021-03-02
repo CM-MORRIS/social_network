@@ -44,7 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
     # this Meta class actually creates the UserSerializer object 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'username', 'email']
+        fields = ['id', 'first_name', 'last_name', 'username', 'email']
 
 
 class PostsSerializer(serializers.ModelSerializer):

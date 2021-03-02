@@ -18,7 +18,7 @@ class Tests(TestCase):
         self.client = APIClient()
 
         self.user = User.objects.create_user(
-            username='test-user', email='test@mail.com', password='secret')
+            first_name="test", last_name="test", username='test-user', email='test@mail.com', password='secret')
 
         self.data = {"text": "This is a post"}
 

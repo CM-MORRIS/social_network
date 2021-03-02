@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import axiosInstance from "../axiosApi";
 import SinglePost from "./SinglePost";
+import CreatePost from "./CreatePost";
 
 
 class Home extends Component {
@@ -21,6 +22,7 @@ class Home extends Component {
             this.setState({
                 allPosts: response.data.map(post => ({
                     postId: post.pk,
+                    userId: post.user_id,
                     username: post.username,
                     text: post.text,
                     dateTime: post.date_time,
@@ -38,7 +40,6 @@ class Home extends Component {
     // this check it mounted to state ?
     componentDidMount() {
         this.getAllPosts();
-        this.render()
     }
 
 
@@ -47,12 +48,14 @@ class Home extends Component {
 
         return (
           <div>
+          <div>{ <CreatePost/> }</div>
             {this.state.allPosts.map(post => (
 
                 <div key={post.pk}>
 
                     <SinglePost
                         postId={post.postId}
+                        userId={post.userId}
                         username={post.username}
                         text={post.text}
                         dateTime={post.dateTime}
@@ -60,7 +63,6 @@ class Home extends Component {
                     />
 
                 </div>
-
             ))}
           </div>
         );

@@ -11,14 +11,14 @@ class Tests(TestCase):
         self.factory = APIRequestFactory()
 
         # test users
-        self.user1 = User.objects.create_user(username='test-user1')
-        self.user2 = User.objects.create_user(username='test-user2')
+        self.user1 = User.objects.create_user(first_name="test", last_name="test", email="test1@email.com", password="secret", username='test-user1')
+        self.user2 = User.objects.create_user(first_name="test", last_name="test", email="test2@email.com", password="secret", username='test-user2')
 
         # test posts
         self.post1 = Posts.objects.create(pk=1, user_id=self.user2, text="Test post user1")
 
         # Simulate logged-in user1 by setting request.user manually.
-        self.request = self.factory.put(f"/api/like_post/{self.post1.pk}")
+        self.request = self.factory.put(f"/api-auth/like_post/{self.post1.pk}")
         force_authenticate(self.request, user=self.user1)
 
 

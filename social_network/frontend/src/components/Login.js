@@ -53,8 +53,6 @@ class Login extends Component {
 
     async handleSubmit(event) {
 
-        console.log("handleSubmit: is called ");
-
         event.preventDefault();
         const response = await axiosInstance.post('/token/obtain/', {
             username: this.state.username,
@@ -65,6 +63,9 @@ class Login extends Component {
         localStorage.setItem('access_token', response.data.access);
         localStorage.setItem('refresh_token', response.data.refresh);
 
+        window.location.reload();
+
+
         console.log("login_refresh_token handle submit:" + response.data.refresh);
         console.log("login_acess_token handle submit:" + response.data.access);
 
@@ -72,20 +73,6 @@ class Login extends Component {
     } catch (error) {
         throw error;
     }
-
-        // axiosInstance.post('/token/obtain/', {
-        //         username: this.state.username,
-        //         password: this.state.password
-        //     }).then(
-        //         result => {
-        //             axiosInstance.defaults.headers['Authorization'] = "JWT " + result.data.access;
-        //             localStorage.setItem('access_token', result.data.access);
-        //             localStorage.setItem('refresh_token', result.data.refresh);
-        //         }
-        // ).catch (error => {
-        //     throw error;
-        // })
-    
 
     render() {
         return (
