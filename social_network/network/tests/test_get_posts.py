@@ -60,7 +60,7 @@ class Tests(TestCase):
         force_authenticate(request, user=self.user1)
 
         # get all posts
-        response = user_posts(request, self.user1.pk)
+        response = user_posts(request, self.user1)
 
         # load response to python dict
         json_dict = json.loads(response.content)
