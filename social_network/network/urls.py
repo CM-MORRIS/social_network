@@ -20,8 +20,13 @@ urlpatterns = [
     path("edit_post/", edit_post, name="edit_post"),
     path("like_post/<int:post_id>", like_post, name="like_post"),
     path('register_user/', register_user, name="register_user"),
+    path('user_exists/<str:username>', user_exists, name='user_exists'),
+    path('email_exists/<str:email>', email_exists, name='email_exists'),
     path('hello/', helloWorldView, name='helloWorldView'),
-    path('get_logged_in_user/', getLoggedInUser, name='getLoggedInUser'),
+    path('get_logged_in_user/', get_logged_in_user, name='get_logged_in_user'),
+    path('is_user_logged_in/', is_user_logged_in, name='is_user_logged_in'),
+    path('is_following/<str:username>', is_following, name='is_following'),
+
 
     # tokens
     path('token/obtain/', jwt_views.TokenObtainPairView.as_view(), name='token_create'),  # override sjwt stock token

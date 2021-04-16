@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import axiosInstance from "../axiosApi";
 import SinglePost from "./SinglePost";
+import FollowButton from "./FollowButton";
+
 
 class Profile extends Component {
   constructor(props) {
@@ -149,7 +151,7 @@ class Profile extends Component {
           </li>
         </div>
 
-        <div>Follow</div>
+        <div><FollowButton userProfile={this.state.username}/></div>
 
         {this.state.userPosts.map((post) => (
           <div key={post.pk}>

@@ -3,8 +3,8 @@ from rest_framework import serializers
 
 class RegistrationSerializer(serializers.ModelSerializer):
 
-    password = serializers.CharField(style={'input_type' : 'password'}, min_length=8, write_only=True, required=True)
-    confirm_password = serializers.CharField(style={'input_type' : 'password'}, min_length=8, write_only=True, required=True)
+    password = serializers.CharField(style={'input_type' : 'password'}, write_only=True, required=True)
+    confirm_password = serializers.CharField(style={'input_type' : 'password'}, write_only=True, required=True)
 
     class Meta:
         model = User
@@ -65,7 +65,7 @@ class FollowsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Follows
-        fields = ['user', 'user_following', 'is_following']
+        fields = ['user', 'user_following', 'is_following']        
 
 
 class LikesSerializer(serializers.ModelSerializer):
