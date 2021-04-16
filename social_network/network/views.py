@@ -42,7 +42,7 @@ def helloWorldView(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user(request):
-
+ 
     serializer = RegistrationSerializer(data=request.data)
 
     if serializer.is_valid(raise_exception=True):
@@ -62,12 +62,41 @@ def user(request, username):
     return JsonResponse(serializer.data, status=200)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
+def user_exists(request, username):
+
+    if (User.objects.filter(username=username).exists()):
+        return JsonResponse({"exists": True}, status=status.HTTP_200_OK)
+    else:
+        return JsonResponse({"exists": False}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def email_exists(request, email):
+
+    if (User.objects.filter(email=email).exists()):
+        return JsonResponse({"exists": True}, status=status.HTTP_200_OK)
+    else:
+        return JsonResponse({"exists": False}, status=status.HTTP_200_OK)
+
+
+
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def getLoggedInUser(request):
+def get_logged_in_user(request):
 
     user_logged_in = request.user.username
 
     return JsonResponse({"user_logged_in": user_logged_in}, status=200)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def is_user_logged_in(request):
+
+    is_user_logged_in = request.user.is_authenticated
+
+    return JsonResponse({"is_user_logged_in": is_user_logged_in}, status=200)
 
 
 @api_view(['GET'])
@@ -143,6 +172,22 @@ def user_following(request, username):
     serializer = FollowsSerializer(follows, many=True)
 
     return JsonResponse(data={"followingList":serializer.data, "followingCount": following_count}, status=200, safe=False)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def is_following(request, username):
+    
+    logged_in_user = request.user.pk
+
+    user_profile = get_object_or_404(User, username=username)
+
+    user_profile = Follows.objects.filter(
+        user_id=logged_in_user, user_following=user_profile, is_following=True).exists()
+
+    if user_profile is True:
+        return JsonResponse({"isFollowing": True}, status=200, safe=False)
+    else:
+        return JsonResponse({"isFollowing": False}, status=200, safe=False)
 
 
 @api_view(['POST'])

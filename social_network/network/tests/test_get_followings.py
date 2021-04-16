@@ -3,7 +3,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient, force_authenticate, APIRequestFactory
 
 from network.models import User, Follows
-from network.views import user_following
+from network.views import user_following, is_following
 
 
 class Tests(TestCase):
@@ -21,8 +21,6 @@ class Tests(TestCase):
         self.user3 = User.objects.create_user(first_name="test", last_name="test", email="test3@email.com", username='test-user3', password="secret")
         self.user4 = User.objects.create_user(first_name="test", last_name="test", email="test4@email.com", username='test-user4', password="secret")
         self.user5 = User.objects.create_user(first_name="test", last_name="test", email="test5@email.com", username='test-user5', password="secret")
-
-        self.client.login(username='test-user1', password='secret')
 
         # test follows (user 1 follows user 2, 3, and 4)
         Follows.objects.create(user_id=self.user1, user_following=self.user2)
@@ -69,5 +67,35 @@ class Tests(TestCase):
 
         # check response 404 not found
         self.assertEqual(response.status_code, 404)
+
+    def test_is_following_true(self):
+
+        request = self.factory.get("/api-auth/is_following/")
+        force_authenticate(request, user=self.user1)
+
+        # test for True follow
+        response = is_following(request, self.user2)
+
+        self.assertEqual(response.status_code, 200)
+
+        resp_dict = json.loads(response.content)
+
+        self.assertEqual(resp_dict['isFollowing'], True)
+
+
+    def test_is_following_false(self):
+
+        request = self.factory.get("/api-auth/is_following/")
+        force_authenticate(request, user=self.user1)
+
+        # test False for follow
+        response = is_following(request, self.user5)
+
+        self.assertEqual(response.status_code, 200)
+
+        resp_dict = json.loads(response.content)
+
+        self.assertEqual(resp_dict['isFollowing'], False)
+
 
         

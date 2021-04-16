@@ -16,11 +16,16 @@
     "webpack-cli": "^4.4.0"
   },
   "dependencies": {
+    "@material-ui/core": "^4.11.3",
+    "@material-ui/icons": "^4.11.2",
     "axios": "^0.21.1",
     "bootstrap": "^4.6.0",
+    "formik": "^2.2.6",
+    "material-components-web": "^10.0.0",
     "react": "^17.0.1",
     "react-bootstrap": "^1.5.0",
     "react-dom": "^17.0.1",
-    "react-router-dom": "^5.2.0"
+    "react-router-dom": "^5.2.0",
+    "yup": "^0.32.9"
   }
 }
