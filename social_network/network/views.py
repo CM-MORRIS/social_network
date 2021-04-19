@@ -256,22 +256,39 @@ def like_post(request, post_id):
         # increase/decrease post like count
         if (obj.is_liked):
             post.number_of_likes += 1
+            action = True
         else:
             post.number_of_likes -= 1
+            action = False
         
         post.save()
 
         return JsonResponse({ "message": "Updated liked status",
-                                "like_count": post.number_of_likes}, status=200)
+                              "like_count": post.number_of_likes,
+                              "action": action }, status=200)
     
     # like doest exist 
 
     # increase like count on post on newly created like
     post.number_of_likes += 1
     post.save()
+    action = True
 
     # if user has never liked post before, create new record with default being liked (True)
     return JsonResponse({ "message": "Created new like",
-                            "like_count": post.number_of_likes }, status=201)
-        
-    
+                            "like_count": post.number_of_likes,
+                            "action": action }, status=201)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def does_like_post(request, post_id):
+
+    logged_in_user = request.user.pk
+
+    is_liked = Likes.objects.filter(user_id=logged_in_user, post_id=post_id, is_liked=True).exists()
+
+    if is_liked is True:
+        return JsonResponse({ "is_liked": "true"}, status=200)
+    else:
+        return JsonResponse({ "is_liked": "false"}, status=200)

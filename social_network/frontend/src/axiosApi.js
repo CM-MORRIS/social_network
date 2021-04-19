@@ -17,10 +17,14 @@ axiosInstance.interceptors.response.use(
     response => response,
     async error => {
         const originalRequest = error.config;
+        console.log("3");
+
 
         // Prevent infinite loops
         if (error.response.status === 401 && originalRequest.url === baseURL+'token/refresh/') {
             window.location.href = '/login/';
+            console.log("2");
+
             return Promise.reject(error);
         }
 
@@ -28,16 +32,21 @@ axiosInstance.interceptors.response.use(
             error.response.status === 401 && 
             error.response.statusText === "Unauthorized") 
             {
+                console.log("4");
+
                 const refreshToken = localStorage.getItem('refresh_token');
 
-                if (refreshToken){
+                if (refreshToken) {
                     const tokenParts = JSON.parse(atob(refreshToken.split('.')[1]));
 
                     // exp date in token is expressed in seconds, while now() returns milliseconds:
                     const now = Math.ceil(Date.now() / 1000);
+                    console.log("1");
                     console.log(tokenParts.exp);
 
                     if (tokenParts.exp > now) {
+                        console.log("5");
+
                         try {
                             const response = await axiosInstance
                                 .post('/token/refresh/', { refresh: refreshToken });
@@ -48,15 +57,22 @@ axiosInstance.interceptors.response.use(
                             originalRequest.headers['Authorization'] = "JWT " + response.data.access;
                             return await axiosInstance(originalRequest);
                         } catch (err) {
+                            console.log("6");
+
                             console.log(err);
                         }
-                    }else{
+                    }
+                    else {
                         console.log("Refresh token is expired", tokenParts.exp, now);
                         window.location.href = '/login/';
+                        console.log("7");
+
                     }
                 }else{
                     console.log("Refresh token not available.")
                     window.location.href = '/login/';
+                    console.log("8");
+
                 }
         }
       

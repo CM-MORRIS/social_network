@@ -36,8 +36,6 @@ const useStyles = makeStyles((theme) => ({
         flexWrap: 'nowrap',
         paddingTop: 50,
         paddingBottom: 50,
-
-
     },
     textField: {
         width: '30ch',
