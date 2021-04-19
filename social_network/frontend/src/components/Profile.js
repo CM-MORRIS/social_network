@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import axiosInstance from "../axiosApi";
-import SinglePost from "./SinglePost";
+import UserPost from "./UserPost";
 import FollowButton from "./FollowButton";
 
 
@@ -155,7 +155,7 @@ class Profile extends Component {
 
         {this.state.userPosts.map((post) => (
           <div key={post.pk}>
-            <SinglePost
+            <UserPost
               postId={post.postId}
               userId={post.userId}
               username={post.username}

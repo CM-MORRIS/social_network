@@ -19,6 +19,7 @@ urlpatterns = [
     path("follow/<str:username>", follow, name="follow"),
     path("edit_post/", edit_post, name="edit_post"),
     path("like_post/<int:post_id>", like_post, name="like_post"),
+    path("does_like_post/<int:post_id>", does_like_post, name='does_like_post'),
     path('register_user/', register_user, name="register_user"),
     path('user_exists/<str:username>', user_exists, name='user_exists'),
     path('email_exists/<str:email>', email_exists, name='email_exists'),
