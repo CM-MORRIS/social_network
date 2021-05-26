@@ -32,9 +32,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'network',
-    'frontend',
-    'authentication',
+    'backend_api',
+    'frontend_react',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -57,12 +56,13 @@ MIDDLEWARE = [
 
 
 REST_FRAMEWORK = {
-    # 'DEFAULT_PERMISSION_CLASSES': (
-    #     'rest_framework.permissions.IsAuthenticated',
-    # ),
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    
+    'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    ],
+    'DEFAULT_PAGINATION_CLASS':'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE':4,
+    
 }
 
 SIMPLE_JWT = {
@@ -102,7 +102,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'social_network.wsgi.application'
 
 # authentication users using custom model
-AUTH_USER_MODEL = 'network.User'
+AUTH_USER_MODEL = 'backend_api.User'
 
 
 # Database
