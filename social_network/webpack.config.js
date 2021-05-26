@@ -4,16 +4,16 @@ module.exports = {
     mode: "development",
 
     // entry point is where Webpack will find the start of our React app and bundle from there.
-    entry: path.resolve(__dirname, 'frontend/src/index.js'),
+    entry: path.resolve(__dirname, 'frontend_react/src/index.js'),
 
      // to allow use of Async/await in our components. 
-     entry: ['babel-polyfill', path.resolve(__dirname, 'frontend/src/index.js')],
+     entry: ['babel-polyfill', path.resolve(__dirname, 'frontend_react/src/index.js')],
      
     output: {
         // options related to how webpack emits results
 
         // where compiled files go
-        path: path.resolve(__dirname, "frontend/static/frontend/public/"),
+        path: path.resolve(__dirname, "frontend_react/static/frontend/public/"),
 
         // 127.0.0.1/static/frontend/public/ where files are served from
         publicPath: "/static/frontend/public/",
