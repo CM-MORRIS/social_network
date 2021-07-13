@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../axiosApi";
 import UserPost from "./UserPost";
+import Container from "@material-ui/core/Container"
 import CreatePost from "./CreatePost";
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { makeStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Typography from "@material-ui/core/Typography";
+import Box from "@material-ui/core/Box";
+import Grid from "@material-ui/core/Grid";
+import Divider from "@material-ui/core/Divider";
+
 
 export default function Home() {
 
@@ -23,8 +29,6 @@ export default function Home() {
       },
     },
   }));
-
-
 
   // Passing an empty array as the second argument to useEffect 
   // makes it only run on mount and unmount, thus stopping any infinite loops.
@@ -64,9 +68,6 @@ export default function Home() {
 
     }, 1500);
 
-    
-
-
     } catch (error) {
         console.log(error.stack);
     }
@@ -77,28 +78,63 @@ export default function Home() {
  
     return (
       <div>
-        {/* <div>{ <CreatePost/> }</div> */}
+
+        <Box m={2} />
+        
+        <Container>
+          <div>{ <CreatePost/> }</div>
+
+        <Box m={5} />
+
+        <Divider light className={classes.divider} />
+
+        <Box m={3} />
+
+        <Grid
+            container
+            direction="column"
+            justify="centre"
+            alignItems="center"
+            spacing={1}
+          >
+          <Grid item xs={12}>
+              <Typography variant="h4">
+                <Box fontWeight="fontWeightBold"> All Posts </Box>
+              </Typography>
+            </Grid>
+          </Grid>
+
+          <Box m={2} />
+
+          </Container>
+
 
         <InfiniteScroll
-            dataLength={posts.length}
-            next={getNextPosts}
-            hasMore={isNextPosts}
-            loader={ <div className={classes.root}> <CircularProgress color="secondary" /> </div> }
+          dataLength={posts.length}
+          next={getNextPosts}
+          hasMore={isNextPosts}
+          loader={
+            <div className={classes.root}>
+              {" "}
+              <CircularProgress color="secondary" />{" "}
+            </div>
+          }
         >
 
-        {posts.map((post) => (
-          <div key={post.pk}>
-            <UserPost
-              postId={post.postId}
-              userId={post.userId}
-              username={post.username}
-              text={post.text}
-              dateTime={post.dateTime}
-              likes={post.likes}
-            />
-          </div>
-        ))}
-
+          {posts.map((post) => (
+            <div key={post.pk}>
+              <Container>
+                <UserPost
+                  postId={post.postId}
+                  userId={post.userId}
+                  username={post.username}
+                  text={post.text}
+                  dateTime={post.dateTime}
+                  likes={post.likes}
+                />
+              </Container>
+            </div>
+          ))}
         </InfiniteScroll>
       </div>
     );

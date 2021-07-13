@@ -1,10 +1,8 @@
 import React, { Component } from "react";
 import { useHistory } from "react-router-dom";
 
-import { Redirect } from "react-router-dom"
 import clsx from 'clsx';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
+
 import axiosInstance from "../axiosApi";
 import {Form as BootstrapForm} from 'react-bootstrap'; // used alias as conflicts with formik 'Form'
 import { useFormik } from 'formik';
@@ -14,8 +12,6 @@ import TextField from '@material-ui/core/TextField';
 import { styled } from '@material-ui/core/styles';
 import { makeStyles } from '@material-ui/core/styles';
 import Divider from '@material-ui/core/Divider';
-import { spacing } from '@material-ui/system';
-import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 
 

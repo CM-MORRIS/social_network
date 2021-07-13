@@ -163,7 +163,7 @@ def user_posts(request, username):
 def user_followers(request, username):
 
     user = get_object_or_404(User, username=username)
-    followers = user.user_followed_by
+    followers = user.user_followed_by.filter(is_following=True)
 
     followers_count = followers.count()
 
@@ -179,7 +179,8 @@ def user_followers(request, username):
 def user_following(request, username):
 
     user = get_object_or_404(User, username=username)
-    follows = user.user_follows
+
+    follows = user.user_follows.filter(is_following=True)
 
     following_count = follows.count()
 
@@ -225,6 +226,7 @@ def follow(request, username):
         obj.save()
         return JsonResponse({ "message": "Updated follow status" }, status=200)
     
+    obj.save()
     return JsonResponse({ "message": "Created new follow" }, status=201)
 
 

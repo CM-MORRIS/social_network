@@ -1,84 +1,134 @@
-import React, { Component } from "react";
-import { Switch, Route, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import axiosInstance from "../axiosApi";
-import Button from 'react-bootstrap/Button';
-import Card from 'react-bootstrap/Card';
-import Profile from "./Profile";
+import Button from '@material-ui/core/Button';
+import { makeStyles } from '@material-ui/core/styles';
+import IconButton from "@material-ui/core/IconButton";
+import Grid from "@material-ui/core/Grid";
+
+export default function FollowButton(props) {
+ 
+
+  const userProfile = props.userProfile;
+
+  const [isUsersOwnProfile, setIsUsersOwnProfile] = useState(null);
+  const [isFollowing, setIsFollowing] = useState(null);
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
 
 
-class FollowButton extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-        userProfile: props.userProfile, 
-    };
+  useEffect(() => {
 
-    this.handleClick = this.handleClick.bind(this);
-    this.handleChange = this.handleChange.bind(this);
+    isUsersOwnProfileCheck();
+    isFollowingCheck();
+    updateFollows();
 
-  }
+  },[isFollowing, followers, following]);
 
-  handleChange(event) {
-    this.setState({ [event.target.name]: event.target.value });
-  }
+  const updateFollows = async () => {
 
-  componentDidMount() {
-
-    this.isFollowing();
+    const followersResponse = await axiosInstance.get(`user_followers/${userProfile}`);
+    setFollowers(followersResponse.data.followersCount);
   
-    // follow
-    // unfollow
-    // no button
-    // implemented the is_following to chek sttaus of button TODO
+    const followingResponse = await axiosInstance.get(`user_following/${userProfile}`);
+    setFollowing(followingResponse.data.followingCount);
+
+};
+
+  const isUsersOwnProfileCheck = async () => {
+
+    let response = await axiosInstance.get(`get_logged_in_user/`)
+
+    setIsUsersOwnProfile(userProfile === response.data.user_logged_in ? true : false);
+
   }
 
-  async handleClick() {
+  const isFollowingCheck = async () => {
 
-    const userProfile = this.state.userProfile;
+      let response = await axiosInstance.get(`is_following/${userProfile}`)
 
-    try {
-
-      let response = await axiosInstance.put(`like_post/${postId}`);
-
-      this.setState({ likes: response.data.like_count });
-
-    } catch (error) {
-      console.log(error.stack);
-    }
+      setIsFollowing(response.data.isFollowing);
   }
 
-  async isFollowing() {
+  const follow = async () => {
 
-    const userProfile = this.state.userProfile;
+    const response = await axiosInstance.post(`follow/${userProfile}`)
+    console.log("follow click message: " + response.data.message)
 
-    try {
+    updateFollows();
 
-        let response = await axiosInstance.get(`is_following/${userProfile}`)
-
-        console.log("response.data['isFollowing']: " + response.data["isFollowing"]);
-        console.log("response['isFollowing']: " + response["isFollowing"]);
-        console.log("this.state.userProfile: " + this.state.userProfile);
-
-
-        return response.data["isFollowing"];
-        
-
-    } catch (error) {
-      console.log(error.stack);
-    }
   }
 
-  // check: logged in user vs user profile 
-  // if following show 'unfollow'
-  // if not following show 'follow'
+  const Follow = () => {
+    return (
+      <div>
+        <Button variant="outlined" color="primary">
+          Follow
+        </Button>
+      </div>
+    );
+  };
 
-  render() {
+  const Unfollow = () => {
     return (
 
-      <div>Follow</div>
-
+      <div>
+        <Button variant="outlined" color="primary">
+          Unfollow
+        </Button>
+      </div>
     );
-  }
+  };
+  
+  const Button = () => {
+
+    if(isUsersOwnProfile) {
+      return (<div></div>);
+    }
+
+    if (isFollowing) {
+      return <Unfollow/>;
+    } else {
+      return <Follow/>;
+    }
+  };
+
+  const useStyles = makeStyles((theme) => ({
+    root: {
+      "& > *": {
+        margin: theme.spacing(1),
+      },
+    },
+  }));
+
+  const classes = useStyles();
+
+  return (
+    <div className={classes.root}>
+      <Grid container direction="row" justify="center" alignItems="center">
+        <Button onClick={() => follow()} />
+      </Grid>
+
+      <Grid container direction="row" justify="center" alignItems="center">
+        <Grid item xs={2}>
+          Followers
+        </Grid>
+
+        <Grid item xs={1}>
+          Following
+        </Grid>
+      </Grid>
+
+      <Grid container direction="row" justify="center" alignItems="centre">
+        <Grid item xs={2}>
+          {followers}
+        </Grid>
+
+        <Grid item xs={1}>
+          {following}
+        </Grid>
+      </Grid>
+    </div>
+  );
+
 }
 
-export default FollowButton;

@@ -14,6 +14,8 @@ import Paper from "@material-ui/core/Paper";
 import Grid from "@material-ui/core/Grid";
 import Box from "@material-ui/core/Box";
 import grey from "@material-ui/core/colors/grey";
+import Container from "@material-ui/core/Container"
+
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -25,7 +27,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(2),
     margin: "auto",
     maxWidth: 500,
-    //   backgroundColor: grey[800]
+    // backgroundColor: grey[800]
   },
   divider: {
     margin: theme.spacing(1, 0, 0),
@@ -44,9 +46,7 @@ export default function UserPost(props) {
   const dateTime = moment(props.dateTime).format("LLL");
 
   const [likes, setLikes] = useState(props.likes);
-  const [isPostLikedByLoggedInUser, setIsPostLikedByLoggedInUser] = useState(
-    null
-  );
+  const [isPostLikedByLoggedInUser, setIsPostLikedByLoggedInUser] = useState(null);
 
   useEffect(() => {
     getIsPostLikedByLoggedInUser();
@@ -70,14 +70,15 @@ export default function UserPost(props) {
 
   const LikeButton = () => {
     if (isPostLikedByLoggedInUser === "true") {
-      return <FavoriteIcon color="action" />;
+      return <FavoriteIcon color="action"/>;
     } else {
-      return <FavoriteBorderIcon />;
+      return <FavoriteBorderIcon/>;
     }
   };
 
   return (
     <div className={classes.root}>
+    <Container>
       <Paper className={classes.paper}>
         <Grid item xs={12} sm container direction="column" spacing={1}>
           <Grid
@@ -101,11 +102,14 @@ export default function UserPost(props) {
           <Grid
             item
             container
-            direction="row"
+            direction="column"
             justify="flex-start"
-            alignItems="center"
+            alignItems="flex-start"
           >
-            <Typography variant="subtitle1">{text}</Typography>
+          <Grid item xs={10}>
+            <Typography variant="subtitle1" style={{ wordWrap: "break-word" }}>{text}</Typography>
+          </Grid>
+
           </Grid>
 
           <Divider light className={classes.divider} />
@@ -124,6 +128,7 @@ export default function UserPost(props) {
           </Grid>
         </Grid>
       </Paper>
+      </Container>
     </div>
   );
 }
